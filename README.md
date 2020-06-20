@@ -22,12 +22,13 @@ All code was developed and tested in the following environment.
 Download the code and data:
 ```
 git clone https://github.com/lanyunshi/Multi-hopComplexKBQA.git
+pip install requirements.txt
 ```
 
 ## **Download Pre-processed Data**
 We evaluate our methods on [WebQuestionsSP](https://www.microsoft.com/en-us/download/details.aspx?id=52763), [ComplexWebQuestions](https://www.tau-nlp.org/compwebq) and [ComplexQuestions](https://github.com/JunweiBao/MulCQA/tree/ComplexQuestions).
 
-The processed data can be downloaded from [link](). Please put the folders under the path *data/*.
+The processed data can be downloaded from [link](https://drive.google.com/drive/folders/1sAOUiFbk2ujfXUityIq51p14j9E4HCZ8?usp=sharing). Please put the folders under the path *data/*.
 There are folders for the splits of each dataset, which denote as *splitname_datasetname*. Each folder contains:
 
 - **q.txt**: The file of questions.
@@ -38,7 +39,7 @@ There are folders for the splits of each dataset, which denote as *splitname_dat
 
 ## **Save Freebase dump in Your Machine**
 As we are querying Freebase dynamically, you need install a database engine in your machine. We are using [Virtuoso Open-Source](https://github.com/openlink/virtuoso-opensource). You can follow the instruction to install.
-Once you installed the database engine, you can download our freebase dump from [link]() and save it in your data path.
+Once you installed the database engine, you can download freebase dump from [link](https://developers.google.com/freebase) and setup your database.
 After the database is installed, you need to replace the *SPARQLPATH* in *code/SPARQL_test.py* file with *your/path/to/database*.
 To do a quick test, you can run:
 ```
@@ -51,26 +52,26 @@ The output is as follows:
 
 Please note if you fail to save Freebase dump in your machine, you **cannot train** a new model using our code.
 But you can **still test** our pre-trained models by using our searched caches (Maybe with little performance loss).
-To obtain our caches, please download from the [link]() and put the folders under the path *data/*.
-
-There are folders for each dataset, which denote as *datasetname*. Each folder contains:
+The caches of tested datasets are stored in *data/datasetname*. Each folder contains:
 
 - **kb_cache.json**: A dictionary of the cache of searched query graphs *{query: answer}*.
 - **m2n_cache.json**: A dictionary of the cache of searched mid *{mid: surface name}*.
 - **query_cache.json**: A set of the cache of search query *set(query)*.
 
+*CWQ/kb_cache_small.json* is a cache on ComplexWebQuestions collected during tesing, which is to ficilate you to validate our pre-trained model, *CWQ/kb_cache.json* is a cache collected suing training and testing so it's much larger.
+
 ## **Download Pre-trained Model**
-You can download our pre-trained model from the [link]() and put the folders under the path *trained_model/*.
+You can download our pre-trained models from the [link](https://drive.google.com/drive/folders/1Kw1kNXR6IaFTmjLDoPcb_YcwWt8NTc8t?usp=sharing) and put the folders under the path *trained_model/*.
 
 ## **Test the Pre-trained Model**
 To test our pre-trained model, simply run shell files:
 ```
 ./[CWQ|WBQ|CQ]_Runner.sh
 ```
-The predicted query graphs are saved in *trained_model/Best_predcp.txt*. Following the official evaluation matrix of , we measure [hit@1|accuracy|precision|recall|f1] based on predicted query graph. 
+The predicted query graphs are saved in *trained_model/Best_predcp.txt*. Following the official evaluation matrix of WebQuestionsSP, we measure [hit@1|accuracy|precision|recall|f1] based on predicted query graph. 
 You can simply run:
 ```
-python code/ErrorAnalysis.py \
+python code/Evaluation.py \
     --data_path trained_model/[CWQ|WBQ|CQ] \
     --data_file Best \
     --mode eval \
@@ -89,10 +90,10 @@ Please note the hit@1 is calculated based on the accumulated scores of the predi
 
 For official hit@1 of ComplexWebQuestions reported in the paper, instead of considering the top1 ranked query graph, we save top2 ranked query graphs and extract answers based on the accumualted scores. Then we transform the mid answer to surface name answers and send to the author for evaluation following the instruction in their [Webpage](https://www.tau-nlp.org/compwebq).
 
-- Change *k* in *select_action* to 2 and re-run *./CWQ_Runner.sh*
-- run:
+- Add command ``*--top_k 2*'' to *./CWQ_Runner.sh* and re-run *./CWQ_Runner.sh*
+- Run code to re-format the answers:
 ```
-python code/ErrorAnalysis.py \
+python code/Evaluation.py \
     --data_path trained_model/CWQ \
     --data_file Best \
     --mode trans 
