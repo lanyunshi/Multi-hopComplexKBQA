@@ -1,0 +1,18 @@
+python code/KBQA_Runner.py  \
+        --train_folder  data/train_WBQ \
+        --dev_folder data/dev_WBQ \
+        --test_folder data/test_WBQ \
+        --vocab_file data/WBQ/vocab.txt \
+        --KB_file data/WBQ/kb_cache.json \
+        --M2N_file data/WBQ/m2n_cache.json \
+        --QUERY_file data/WBQ/query_cache.json \
+        --output_dir trained_model/WBQ \
+        --config config/bert_config.json \
+        --gpu_id 2\
+        --load_model trained_model/WBQ/Best \
+        --save_model Best \
+        --max_hop_num 2 \
+        --num_train_epochs 50 \
+        --do_train 0 \
+        --do_eval 2\
+        --do_policy_gradient 1\
