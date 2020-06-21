@@ -13,8 +13,8 @@ If you find this code useful in your research, please cite
 >year={2020}\
 >}
 
-## **Setups** 
-All code was developed and tested in the following environment. 
+## **Setups**
+All code was developed and tested in the following environment.
 - Ubuntu 16.04
 - Python 3.7.1
 - Pytorch 1.1.0
@@ -58,7 +58,7 @@ The caches of tested datasets are stored in *data/datasetname*. Each folder cont
 - **m2n_cache.json**: A dictionary of the cache of searched mid *{mid: surface name}*.
 - **query_cache.json**: A set of the cache of search query *set(query)*.
 
-*CWQ/kb_cache_small.json* is a cache on ComplexWebQuestions collected during tesing, which is to ficilate you to validate our pre-trained model, *CWQ/kb_cache.json* is a cache collected suing training and testing so it's much larger.
+*CWQ/kb_cache.json* is a cache on ComplexWebQuestions collected during tesing, which is to validate our pre-trained model. The complete cache collected during training and testing is too much to update.
 
 ## **Download Pre-trained Model**
 You can download our pre-trained models from the [link](https://drive.google.com/drive/folders/1Kw1kNXR6IaFTmjLDoPcb_YcwWt8NTc8t?usp=sharing) and put the folders under the path *trained_model/*.
@@ -68,7 +68,7 @@ To test our pre-trained model, simply run shell files:
 ```
 ./[CWQ|WBQ|CQ]_Runner.sh
 ```
-The predicted query graphs are saved in *trained_model/Best_predcp.txt*. Following the official evaluation matrix of WebQuestionsSP, we measure [hit@1|accuracy|precision|recall|f1] based on predicted query graph. 
+The predicted query graphs are saved in *trained_model/Best_predcp.txt*. Following the official evaluation matrix of WebQuestionsSP, we measure [hit@1|accuracy|precision|recall|f1] based on predicted query graph.
 You can simply run:
 ```
 python code/Evaluation.py \
@@ -96,11 +96,11 @@ For official hit@1 of ComplexWebQuestions reported in the paper, instead of cons
 python code/Evaluation.py \
     --data_path trained_model/CWQ \
     --data_file Best \
-    --mode trans 
+    --mode trans
 ```
 
 ## **Train a New Model**
-If you want to train your model, for example WebQuestionsSP, you can input 
+If you want to train your model, for example WebQuestionsSP, you can input
 ```
 python code/KBQA_Runner.py  \
         --train_folder  data/train_WBQ \
