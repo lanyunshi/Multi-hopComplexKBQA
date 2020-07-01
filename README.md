@@ -58,7 +58,7 @@ The caches of tested datasets are stored in *data/datasetname*. Each folder cont
 - **m2n_cache.json**: A dictionary of the cache of searched mid *{mid: surface name}*.
 - **query_cache.json**: A set of the cache of search query *set(query)*.
 
-*CWQ/kb_cache.json* is a cache on ComplexWebQuestions collected during tesing, which is to validate our pre-trained model. The complete cache collected during training and testing is too much to update.
+*CWQ/kb_cache.json* is a cache on ComplexWebQuestions collected during tesing, which is to validate our pre-trained model. The complete cache collected during training and testing is too large to be uploaded.
 
 ## **Download Pre-trained Model**
 You can download our pre-trained models from the [link](https://drive.google.com/drive/folders/1Kw1kNXR6IaFTmjLDoPcb_YcwWt8NTc8t?usp=sharing) and put the folders under the path *trained_model/*.
@@ -118,7 +118,10 @@ python code/KBQA_Runner.py  \
         --num_train_epochs 50 \
         --do_train 1 \
         --do_eval 1\
-        --do_policy_gradient 1
+        --do_policy_gradient 1 \
 ```
 
-It takes long time to train the model at the first begining as random exploration is conducting, especially on ComplexWebQuestions. With the convergence of the model, the query time will decrease and the training processing becomes faster and faster.
+It takes long time to train the model at the first beginning as random exploration is conducting, especially on ComplexWebQuestions. With the convergence of the model, the query time will decrease and the training processing becomes faster and faster.
+
+The training procedure on WBQ dataset are displayed below:
+![WBQ_f1]()

@@ -377,7 +377,7 @@ def select_action(policy, raw_logits, adjust_F1s = None, F1s = None, is_train = 
         '''If we use reinforcement learning'''
         #logits = relaxed_softmax(raw_logits)
         logits = F.softmax(raw_logits, 1)
-        probs = logits if epoch > 20 else 0.5*logits + 0.5*adjust_F1s  # #
+        probs = 0.5*logits + 0.5*adjust_F1s  # #
         if torch.isnan(probs).any(): print(probs[:10]); exit() # debug
         c = Categorical(probs=probs)
         action = c.sample((3, ))
