@@ -124,4 +124,6 @@ python code/KBQA_Runner.py  \
 It takes long time to train the model at the first beginning as random exploration is conducting, especially on ComplexWebQuestions. With the convergence of the model, the query time will decrease and the training processing becomes faster and faster.
 
 The training procedure on WBQ dataset are displayed below:
-![WBQ_f1]()
+<img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_f1.png" width="450"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_loss.png" width="450">
+
+More details about training procedure on CWQ dataset will be added soon.
