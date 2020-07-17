@@ -1,7 +1,6 @@
 # **Query Graph Generation for Answering Multi-hop Complex Questions from Knowledge Bases**
 This is the code for the paper:
-**[Query Graph Generation for Answering Multi-hop Complex Questions from Knowledge Bases]
-(https://www.aclweb.org/anthology/2020.acl-main.91.pdf)**\
+**[Query Graph Generation for Answering Multi-hop Complex Questions from Knowledge Bases](https://www.aclweb.org/anthology/2020.acl-main.91.pdf)**\
 Yunshi Lan, Jing Jiang\
 [ACL 2020](https://acl2020.org/) .
 
@@ -221,6 +220,6 @@ python code/KBQA_Runner.py  \
 ```
 
 The training procedures on CWQ dataset in above 3 stages are displayed below:
-<img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_f1.png" width="300"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_loss.png" width="300">
+<img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/CWQ_1hop.png" width="300"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/CWQ_2hop.png" width="300"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/CWQ_3hop.png" width="300">
 
 If you have any questions, please open an issue or send an email to yslan.2015@phdcs.smu.edu.sg
