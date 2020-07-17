@@ -24,7 +24,7 @@ import sqlite3
 
 from tokenization import Tokenizer
 from ModelsRL import ModelConfig, Policy
-#from pytorch_pretrained_bert.optimization import BertAdam
+from pytorch_pretrained_bert.optimization import BertAdam
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -55,6 +55,7 @@ class TrainingInstance(object):
         self.current_F1s = []
         self.orig_F1s = []
         self.F1s = []
+        self.previous_action_num = 0
 
         for t in topic_entity:
             self.current_topic_entity[t] = ((t, ), )
@@ -188,7 +189,7 @@ def check_answer(raw_answer):
             else:
                 return 0
 
-def retrieve_KB(batch, KB, QUERY, M2N, tokenizer, method, time = 0, is_train = False, save_model='SO'):
+def retrieve_KB(batch, KB, QUERY, M2N, tokenizer, method, train_limit_number=1000, time = 0, is_train = False, save_model='SO'):
     '''Retrieve subgraphs from the KB based on current topic entities'''
     te, c_te, hn = batch.topic_entity, batch.current_topic_entity, batch.hop_number
     raw_candidate_paths, paths, batch.orig_F1s ={}, {}, []
@@ -196,35 +197,36 @@ def retrieve_KB(batch, KB, QUERY, M2N, tokenizer, method, time = 0, is_train = F
     if time > 0:
         for h_idx, h in enumerate(c_te):
             update_raw_candidate_paths(c_te[h], [h], c_te[h], raw_candidate_paths, batch, time)
-        hn_mark = len(raw_candidate_paths)
+        batch.previous_action_num = len(raw_candidate_paths)
     for previous_path in set(c_te.values()):
         raw_paths, queries = {}, set()
         if previous_path in KB:
             paths = KB[previous_path]
-        if True: #time:
-            if (tokenizer.dataset in ['CWQ'] and time < 2) or (len(paths) == 0 and time==0): #(tokenizer.dataset in ['CWQ'] and time < 2) or
+        if time:
+            if tokenizer.dataset in ['CWQ'] and time < 2: #(tokenizer.dataset in ['CWQ'] and time < 2) or (len(paths) == 0 and time==0): #(tokenizer.dataset in ['CWQ'] and time < 2) or
                 ''' Single hop relations, remove this when WBQ '''
                 path, query = SQL_1hop(previous_path, QUERY=QUERY)
-                if query: raw_paths.update(path); QUERY.update(query); query_num += 1
+                if query:  raw_paths.update(path); QUERY.update(query); query_num += 1 #QUERY_save.update(query) #
                 ''' 2 hop relations, remove this when WBQ'''
                 path, query = SQL_2hop(previous_path, QUERY=QUERY)
-                if query: raw_paths.update(path); QUERY.update(query); query_num += 1
+                if query:  raw_paths.update(path); QUERY.update(query); query_num += 1 #QUERY_save.update(query)
+        if time:
             ''' Constraint relations via entities, time, min max'''
             overlap_te = set([mid for mid in te if te[mid][1] == te[previous_path[0][0]][1]]) if tokenizer.dataset in ['CQ'] else set([mid for mid in sum(previous_path, ()) if re.search('^[mg]\.', mid)]) #
             const = set(te.keys()) - overlap_te
             #print(te); print(const); print(batch.const_time); print(batch.const_minimax); print(batch.const_type)
             if len(const): path, query = SQL_1hop_reverse(previous_path, const, QUERY=QUERY) #
-            if len(const) and query: raw_paths.update(path); QUERY.update(query); query_num += 1
+            if len(const) and query: raw_paths.update(path); QUERY.update(query); query_num += 1 #QUERY_save.update(query)
             # if len(const): path, query = SQL_2hop_reverse(previous_path, const, QUERY=QUERY)
             # if len(const) and query: raw_paths.update(path); QUERY.update(query); query_num += 1
             if batch.const_time: path, query = SQL_1hop_reverse(previous_path, batch.const_time, QUERY=QUERY)
-            if batch.const_time and query: raw_paths.update(path); QUERY.update(query); query_num += 1
+            if batch.const_time and query: raw_paths.update(path); QUERY.update(query); query_num += 1 #QUERY_save.update(query)
             if batch.const_minimax: path, query = SQL_1hop_reverse(previous_path, batch.const_minimax, QUERY=QUERY)
-            if batch.const_minimax and query: raw_paths.update(path); QUERY.update(query); query_num += 1
+            if batch.const_minimax and query: raw_paths.update(path); QUERY.update(query); query_num += 1 #QUERY_save.update(query)#
             ''' Constraint relations via types'''
             const = set(batch.const_type)
             if len(const): path, query = SQL_1hop_type(previous_path, const, QUERY=QUERY)
-            if len(const) and query: raw_paths.update(path); QUERY.update(query); query_num += 1
+            if len(const) and query:  raw_paths.update(path); QUERY.update(query); query_num += 1 #QUERY_save.update(query) #
             if time:
                 for raw_path in copy.deepcopy(raw_paths): raw_paths[previous_path + raw_path] = raw_paths.pop(raw_path)
         for raw_path in raw_paths: update_hierarchical_dic_with_set(KB, previous_path, raw_path, raw_paths[raw_path])
@@ -237,9 +239,10 @@ def retrieve_KB(batch, KB, QUERY, M2N, tokenizer, method, time = 0, is_train = F
     '''Process the candidate paths'''
     candidate_paths, topic_scores, topic_numbers, answer_numbers, type_numbers, superlative_numbers, year_numbers, hop_numbers, F1s, RAs = [], [], [], [], [], [], [], [], [], []
     max_cp_length, types = 0, []
-    limit_number = 100 if method in ['Bert'] else 500 if ('LM' in method) else 1500
+    limit_number = train_limit_number
     for p_idx, p in enumerate(raw_candidate_paths):
-        if (not is_train) or (np.random.random() < (limit_number*1./len(raw_candidate_paths))):
+        CWQ_F1 = generate_F1_tmp(clean_answer(raw_candidate_paths[p]), batch.answer) if tokenizer.dataset in ['CWQ', 'WBQ'] else 0.
+        if (not is_train) or (np.random.random() < (limit_number*1./len(raw_candidate_paths))) or CWQ_F1 > 0.5:
             '''If answer equals to topic entities'''
             if raw_candidate_paths[p] == set([p[0][0]]) or not check_answer(raw_candidate_paths[p]): continue #
             path, topic_score, p_tmp, topic_number, type_number, superlative_number, year_number, contain_minimax, skip = [], 0., (), 0., 0., 0., 0., False, False
@@ -360,7 +363,7 @@ def truncated_sequence(cp, mcl, fill=0):
             cp[c_idx] += [fill] * (mcl - len(c))
     return cp
 
-def select_action(policy, raw_logits, adjust_F1s = None, F1s = None, is_train = True, k = 1, is_reinforce=True, time=0, epoch=0):
+def select_action(policy, raw_logits, adjust_F1s = None, previous_action_num = None, is_train = True, k = 1, is_reinforce=True, time=0, dataset='WBQ', adjust_F1_weight=0.5):
     #Select an action (0 or 1) by running policy model and choosing based on the probabilities in state
     loss = None
     if is_train and is_reinforce == 2:
@@ -370,19 +373,19 @@ def select_action(policy, raw_logits, adjust_F1s = None, F1s = None, is_train = 
         #print(adjust_F1s.nonzero()[:1, 1: 2])
         k = np.min([3, logits.size(1)])# if time <2 else np.min([100, logits.size(1)])
         #print(logits, adjust_F1s)
-        loss = nn.KLDivLoss(reduction='sum')(logits.log(), adjust_F1s)
-        #loss = nn.MSELoss()(logits, adjust_F1s)
+        #loss = nn.KLDivLoss(reduction='sum')(logits.log(), adjust_F1s)
+        loss = nn.MSELoss()(logits, adjust_F1s)
         action = torch.argsort(adjust_F1s, dim =1, descending=True)[:, :k].view(1, k)
     elif is_train:
         '''If we use reinforcement learning'''
         #logits = relaxed_softmax(raw_logits)
         logits = F.softmax(raw_logits, 1)
-        probs = 0.5*logits + 0.5*adjust_F1s  # #
+        probs = (1.-adjust_F1_weight)*logits + adjust_F1_weight*adjust_F1s  # #
         if torch.isnan(probs).any(): print(probs[:10]); exit() # debug
         c = Categorical(probs=probs)
         action = c.sample((3, ))
         c_log_prob = torch.gather(probs.transpose(1, 0), 0, action)
-        # print(probs)
+        #print('train ', time, probs[:, :5], action)
         # Add log probability of our chosen action to our history
         if policy.policy_history.dim() != 0:
             policy.policy_history = torch.cat([policy.policy_history, c_log_prob.view(3, 1)], -1)
@@ -396,6 +399,7 @@ def select_action(policy, raw_logits, adjust_F1s = None, F1s = None, is_train = 
     else:
         k = np.min([k, raw_logits.size(1)]) #if time <2 else np.min([100, raw_logits.size(1)])
         logits = adjust_F1s if adjust_F1s is not None else raw_logits
+        #print('test time', logits[:, :5])
         action = torch.argsort(logits, dim =1, descending=True)[:, :k].view(k, 1)
     return action, loss
 
@@ -450,7 +454,7 @@ def generate_F1(logits, action, batch, time = 0, is_train = True, eval_metric = 
             raise Exception('Evaluation metric is not correct !')
         F1s += [F1]
 
-    stop = True if (max_index in np.arange(len(action)) and time > 0) else False
+    stop = True if (max_index in np.arange(batch.previous_action_num) and time > 0) else False
     return F1s, pred_cp, stop, pred_ans, top_pred_ans
 
 def generate_Acc_tmp(pred_graph, golden_graph):
@@ -494,7 +498,7 @@ def update_policy(adjust_loss, policy, optimizer, batch, device = None, LM_loss 
     if device: top_index = Variable(top_index).to(device)
     if is_reinforce != 2: gather_policy = torch.gather(policy.policy_history, 0, top_index)
     loss = adjust_loss if adjust_loss is not None else torch.sum(torch.mul(gather_policy, rewards).mul(-1))
-    if LM_loss: loss += LM_loss*mask_weight
+    if LM_loss: loss += LM_loss
 
     # Update network weights
     optimizer.zero_grad()
@@ -535,6 +539,8 @@ def main():
     parser.add_argument("--seed", default=123, type=int, help="random seeed for initialization")
     parser.add_argument("--gpu_id", default=1, type=int, help="id of gpu")
     parser.add_argument("--top_k", default=1, type=int, help="retrieve top k relation path during prediction")
+    parser.add_argument("--adjust_F1_weight", default=0.5, type=float, help="weight of adjust F1 score during training")
+    parser.add_argument("--train_limit_number", default=150, type=int, help="the number of training instances")
     parser.add_argument("--max_hop_num", default=1, type=int, help="maximum hop number")
     parser.add_argument("--do_policy_gradient", default=1, type=int, help="Whether to train with policy gradient. 1: use policy gradient; 2: use maximum likelihood with beam")
     args = parser.parse_args()
@@ -618,6 +624,7 @@ def main():
     #                      t_total=t_total)
     param_optimizer = list(policy.parameters())
     optimizer = optim.Adam(param_optimizer, lr=args.learning_rate)
+    te_idx = json.load(open('data/train_CWQ/te_idx.json', 'r'))
 
     args.num_train_epochs = 1 if not args.do_train else args.num_train_epochs
     for epoch in trange(int(args.num_train_epochs), desc="Epoch"):
@@ -627,15 +634,19 @@ def main():
             policy.train()
             if args.do_eval == 2: train_instances = train_instances[:1]
             random.shuffle(train_instances)
+            #train_instances_ = [train_instances[t_idx] for t_idx in te_idx]
+            #random.shuffle(train_instances_)
 
-            for step, batch in enumerate(train_instances[:5000]):
+            for step, batch in enumerate(train_instances[:10000]): #train_instances_
                 #print(step)
                 done, skip_forward = False, False
                 time, _total_losses = 0, 0
 
                 while time < args.max_hop_num:
                     # Retrieve graphs based on the current graph
-                    cp, ts, tn, ty_n, su_n, ye_n, an_n, hn, RAs, mcl, qr_n, done = retrieve_KB(batch, KB, QUERY, M2N, tokenizer, config.method, time = time, is_train=True, save_model=args.save_model)
+                    cp, ts, tn, ty_n, su_n, ye_n, an_n, hn, RAs, mcl, qr_n, done = retrieve_KB(batch, KB, QUERY, M2N, tokenizer,
+                                    config.method, train_limit_number=args.train_limit_number, time = time, is_train=True,
+                                    save_model=args.save_model)
                     query_num += qr_n
 
                     if len(cp) == 0: skip_forward = True; break # When there is no candidate paths for the question, skip
@@ -650,8 +661,10 @@ def main():
                     F1s = torch.tensor(batch.F1s, dtype=torch.float).view(1, -1)
                     if args.gpu_id: _adjust_F1s, _F1s = adjust_F1s.to(device), F1s.to(device)
                     if torch.isnan(_logits).any() or (_logits.size()!= _adjust_F1s.size()): skip_forward = True; break # When there is a bug, skip
-                    _action, _adjust_loss = select_action(policy, _logits, adjust_F1s = _adjust_F1s, F1s = _F1s,
-                                                          is_train=True, is_reinforce=args.do_policy_gradient, epoch=epoch) #True
+                    _action, _adjust_loss = select_action(policy, _logits, adjust_F1s = _adjust_F1s,
+                                                          previous_action_num = batch.previous_action_num,
+                                                          is_train=True, time = time, is_reinforce=args.do_policy_gradient,
+                                                          dataset=tokenizer.dataset, adjust_F1_weight = args.adjust_F1_weight) #True
                     if args.do_policy_gradient ==2: loss= update_policy_immediately(_adjust_loss, optimizer)
                     action = _action.cpu().data.numpy() if args.gpu_id else _action.data.numpy()
                     eval_metric = 'GraphAcc' if (time==0 and tokenizer.dataset in ['CWQ']) else 'AnsAcc' if (tokenizer.dataset in ['FBQ']) else 'F1Text' if (tokenizer.dataset in ['CQ']) else 'F1'
@@ -681,6 +694,7 @@ def main():
                     global_step += 1
                 policy.reset()
                 batch.reset()
+                #print('max train reward', np.max(batch.orig_F1s), '\n')
 
                 if (step + 1) % 5000 == 0:
                     print('trained %s instances ...' %step)
@@ -713,7 +727,7 @@ def main():
                         _logits, _ = policy(ready_batch, None)
                     logits = _logits.cpu().data.numpy() if args.gpu_id else _logits.data.numpy()
 
-                    _action, _ = select_action(policy, _logits, is_train=False, k=args.top_k)
+                    _action, _ = select_action(policy, _logits, is_train=False, k=args.top_k, dataset=tokenizer.dataset)
                     action = _action.cpu().data.numpy() if args.gpu_id else _action.data.numpy()
                     eval_metric = 'AnsAcc' if (tokenizer.dataset in ['FBQ']) else 'F1Text' if (tokenizer.dataset in ['CQ']) else 'F1'
                     reward, pred_cp, done, _, _ = generate_F1(logits, action, batch, time = time, is_train = False, eval_metric=eval_metric, M2N=M2N)
@@ -731,7 +745,7 @@ def main():
             result = {'training loss': tr_loss/np.max([nb_tr_examples, 1.e-10]),
                       'training reward': tr_reward/np.max([nb_tr_examples, 1.e-10]),
                       'dev reward': eval_reward/np.max([nb_eval_examples, 1.e-10])}
-            if tokenizer.dataset in ['CWQ', 'WBQ']: result['train reward boundary'] = tr_reward_boundary/np.max([nb_tr_examples, 1.e-10])
+            if tokenizer.dataset in ['CWQ', 'WBQ', 'CQ']: result['train reward boundary'] = tr_reward_boundary/np.max([nb_tr_examples, 1.e-10])
             if tokenizer.dataset in ['CWQ']: result['training hop1 acc'] = hop1_tr_reward/np.max([nb_tr_examples, 1.e-10])
             if 'LM' in config.method: result['training LM loss'] = tr_LM_loss/np.max([nb_tr_examples, 1.e-10])
             eval_reward = eval_reward/np.max([nb_eval_examples, 1.e-10])
@@ -764,7 +778,7 @@ def main():
                         adjust_F1s = torch.tensor(batch.current_F1s, dtype=torch.float).view(1, -1)
                         if args.gpu_id: _adjust_F1s = adjust_F1s.to(device)
 
-                        _action, _ = select_action(policy, _logits, is_train=False, k=args.top_k, time = time) # adjust_F1s = _adjust_F1s,  if time < 2 else None
+                        _action, _ = select_action(policy, _logits, is_train=False, k=args.top_k, dataset=tokenizer.dataset) # adjust_F1s = _adjust_F1s,  if time < 2 else None
                         action = _action.cpu().data.numpy() if args.gpu_id else _action.data.numpy()
                         eval_metric = 'AnsAcc' if (tokenizer.dataset in ['FBQ']) else 'F1Text' if (tokenizer.dataset in ['CQ']) else 'Hits1' if (tokenizer.dataset in ['CWQ']) else 'F1'
                         reward, pred_cp, done, pred_ans, top_pred_ans = generate_F1(logits, action, batch, time = time, is_train = False, eval_metric=eval_metric, M2N=M2N, top_pred_ans=top_pred_ans)
@@ -783,9 +797,10 @@ def main():
                         nb_eval_examples += 1
                         nb_eval_steps += 1
                     batch.reset()
+                    #print('max reward', np.max(batch.orig_F1s), '\n')
 
                 result['test reward'] = eval_reward/np.max([nb_eval_examples, 1.e-10])
-                result['query times'] = '%s (save model) %s' %(query_num, mask_weight)
+                result['query times'] = '%s (save model) ' %(query_num)
                 if args.do_eval == 2: print(result); exit()
                 if tokenizer.dataset in ['CWQ', 'WBQ', 'CQ']: result['test reward boundary'] = eval_reward_boundary/np.max([nb_eval_examples, 1.e-10])
                 g = open(save_eval_cp_file, "w")
@@ -802,9 +817,9 @@ def main():
                     '''save the model and some kb cache'''
                     model_to_save = policy.module if hasattr(policy, 'module') else policy
                     torch.save(model_to_save.state_dict(), save_model_file)
-                    Save_KB_Files(convert_json_to_save(KB), save_kb_cache)
+                    Save_KB_Files(convert_json_to_save(KB), save_kb_cache) #KB_save
                     Save_KB_Files(M2N, save_m2n_cache)
-                    Save_KB_Files(list(QUERY), save_query_cache)
+                    Save_KB_Files(list(QUERY), save_query_cache) #QUERY_save
 
             with open(save_eval_file, "a") as writer:
                 logger.info("***** Eval results (%s)*****" %epoch)
@@ -812,8 +827,6 @@ def main():
                 for key in sorted(result.keys()):
                     logger.info(" %s=%s", key, str(result[key]))
                     writer.write("%s=%s \n" %(key, str(result[key])))
-
+            #exit()
 if __name__ == '__main__':
-    global mask_weight
-    mask_weight = 0.001
     main()
