@@ -39,7 +39,7 @@ There are folders for the splits of each dataset, which denote as *splitname_dat
 ## **Save Freebase dump in Your Machine**
 As we are querying Freebase dynamically, you need install a database engine in your machine. We are using [Virtuoso Open-Source](https://github.com/openlink/virtuoso-opensource). You can follow the instruction to install.
 Once you installed the database engine, you can download the raw freebase dump from [link](https://developers.google.com/freebase) and setup your database.
-The dump used in our experiments has been pre-processed by removing non-English triplets (See code in *FreebaseTool/*).
+The dump used in our experiments has been pre-processed by removing non-English triplets (See code in *code/FreebaseTool/*).
 You can use the code to clean up the raw Freebase dump, which could speed up the query time but may not influence the results.
 After the database is installed, you need to replace the *SPARQLPATH* in *code/SPARQL_test.py* file with *your/path/to/database*.
 To do a quick test, you can run:
@@ -101,7 +101,7 @@ python code/Evaluation.py \
 ## **Train a New Model**
 If you want to train your model, for example CQ, you can input
 ```
-CUDA_VISIBLE_DEVICES=3,1 python code/KBQA_Runner_Github.py  \
+python code/KBQA_Runner_Github.py  \
         --train_folder  data/train_CQ \
         --dev_folder data/dev_CQ \
         --test_folder data/test_CQ \
