@@ -27,7 +27,7 @@ pip install requirements.txt
 ## **Download Pre-processed Data**
 We evaluate our methods on [WebQuestionsSP](https://www.microsoft.com/en-us/download/details.aspx?id=52763), [ComplexWebQuestions](https://www.tau-nlp.org/compwebq) and [ComplexQuestions](https://github.com/JunweiBao/MulCQA/tree/ComplexQuestions).
 
-The processed data can be downloaded from [link](https://drive.google.com/drive/folders/1sAOUiFbk2ujfXUityIq51p14j9E4HCZ8?usp=sharing) (Please download our latest version. We uploaded another version of pre-processed data on CWQ. Update on 17th July). Please unzip (in linux system) and put the folders under the path *data/*.
+The processed data can be downloaded from [link](https://drive.google.com/drive/folders/1sAOUiFbk2ujfXUityIq51p14j9E4HCZ8?usp=sharing) (Please download our latest version. We uploaded another version of pre-processed data on CWQ. Update on 17th July). Please unzip **(in linux system)** and put the folders under the path *data/*.
 There are folders for the splits of each dataset, which denote as *splitname_datasetname*. Each folder contains:
 
 - **q.txt**: The file of questions.
