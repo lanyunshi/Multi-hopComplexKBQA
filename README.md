@@ -101,7 +101,7 @@ python code/Evaluation.py \
 ## **Train a New Model**
 If you want to train your model, for example CQ, you can input
 ```
-python code/KBQA_Runner_Github.py  \
+python code/KBQA_Runner.py  \
         --train_folder  data/train_CQ \
         --dev_folder data/dev_CQ \
         --test_folder data/test_CQ \
