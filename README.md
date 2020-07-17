@@ -220,6 +220,7 @@ python code/KBQA_Runner.py  \
 ```
 
 The training procedures on CWQ dataset in above 3 stages are displayed below:
+
 <img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/CWQ_1hop.png" width="300"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/CWQ_2hop.png" width="300"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/CWQ_3hop.png" width="300">
 
 If you have any questions, please open an issue or send an email to yslan.2015@phdcs.smu.edu.sg
