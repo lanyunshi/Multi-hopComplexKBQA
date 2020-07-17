@@ -124,10 +124,6 @@ CUDA_VISIBLE_DEVICES=3,1 python code/KBQA_Runner_Github.py  \
 
 It takes long time to train the model at the first beginning as random exploration is conducting, especially on CWQ. With the convergence of the model, the query time will decrease and the training processing becomes faster.
 
-The training procedure on WBQ dataset are displayed below:
-
-<img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_f1.png" width="300"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_loss.png" width="300">
-
 ## **Cannot install Database ?**
 Don't worry! We provide an implementation on WBQ dataset without installation of the database by uploading the entire cache (in the latest [link](https://drive.google.com/drive/folders/1sAOUiFbk2ujfXUityIq51p14j9E4HCZ8?usp=sharing)) on WBQ folder. You can simply run
 ```
@@ -150,6 +146,10 @@ python code/KBQA_Runner.py  \
         --do_policy_gradient 1 \
         --train_limit_number 150 \
 ```
+
+The training procedure on WBQ dataset are displayed below:
+
+<img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_f1.png" width="300"><img src="https://github.com/lanyunshi/Multi-hopComplexKBQA/blob/master/figure/WBQ_loss.png" width="300">
 
 ## **Too Slow to Train on CWQ with One Stage ?**
 To train a model on CWQ dataset fast, you can first pre-train a model with max hop number as 1.
