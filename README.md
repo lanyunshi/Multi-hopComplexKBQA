@@ -16,7 +16,7 @@ If you find this code useful in your research, please cite
 All codes were developed and tested in the following environment.
 - Ubuntu 16.04
 - Python 3.7.1
-- Pytorch 1.1.0
+- Pytorch 1.3.0
 
 Download the code and data:
 ```
