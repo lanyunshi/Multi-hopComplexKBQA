@@ -624,7 +624,7 @@ def main():
     #                      t_total=t_total)
     param_optimizer = list(policy.parameters())
     optimizer = optim.Adam(param_optimizer, lr=args.learning_rate)
-    te_idx = json.load(open('data/train_CWQ/te_idx.json', 'r'))
+    #te_idx = json.load(open('data/train_CWQ/te_idx.json', 'r'))
 
     args.num_train_epochs = 1 if not args.do_train else args.num_train_epochs
     for epoch in trange(int(args.num_train_epochs), desc="Epoch"):
